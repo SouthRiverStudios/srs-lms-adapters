@@ -188,8 +188,10 @@ srs.adapter.connection = function ($) {
                 }
                 
                 this.setProperty(srs.adapter.properties.STATUS, status);
-                this.setProperty(srs.adapter.properties.SUSPEND_DATA, suspend_data.toString());
                 this.setProperty(srs.adapter.properties.LOCATION, location);
+                if (suspend_data && suspend_data.length) {
+                    this.setProperty(srs.adapter.properties.SUSPEND_DATA, suspend_data.toString());
+                }
 
                 if (srs.adapter.version === '2004' && this.getProperty(srs.adapter.properties.STATUS) === srs.adapter.strings.COMPLETED) {
                     this.setProperty(srs.adapter.properties.SUCCESS, srs.adapter.strings.PASSED);
