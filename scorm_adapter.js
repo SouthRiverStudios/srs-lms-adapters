@@ -123,7 +123,7 @@ srs.adapter.user = function () {
     this.percent_complete = null;
 };
 
-srs.adapter.connection = function ($) {
+srs.adapter.connection = function () {
 
     return {
         
@@ -133,7 +133,10 @@ srs.adapter.connection = function ($) {
             this._handle = this.getHandle();
             if (this._handle) {
                 this.read(callback);
-                $(window).one('unload', $.proxy(this.exit, this));
+                var that = this;
+                window.addEventListener('unload', function (event) {
+                        that.exit();
+                    });
             } else {
                 callback(new srs.adapter.user());
             }
@@ -304,6 +307,7 @@ srs.adapter.connection = function ($) {
             return success;
         },
         exit: function () {
+            window.removeEventListener('unload');
             var success = this.terminate();
             return success;
         }
