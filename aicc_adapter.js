@@ -100,7 +100,10 @@ srs.adapter.connection = function ($) {
                     }
                 }
 
-                $(window).one('unload', $.proxy(this.exit, this));
+                var that = this;
+                window.addEventListener('unload', function (event) {
+                        that.exit();
+                    });
                 this.getAICC(callback);
                 
             } else {
@@ -239,6 +242,7 @@ srs.adapter.connection = function ($) {
                 });
         },
         exit : function () {
+            window.removeEventListener('unload');
             var success = this.terminate();
             return success;
         }
