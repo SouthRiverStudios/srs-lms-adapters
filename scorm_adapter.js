@@ -28,7 +28,7 @@ var srs = srs || {};
 srs.adapter = srs.adapter || {};
 
 srs.adapter.type = 'SCORM';
-srs.adapter.version = '1.2';
+//srs.adapter.version = '1.2';
 //srs.adapter.version = '2004';
 
 switch (srs.adapter.version) {

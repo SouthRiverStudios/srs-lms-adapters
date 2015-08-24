@@ -28,6 +28,15 @@ SCORM 1.2:
 SCORM 2004:
 
     srs.adapter.version = '2004';
+    
+SCORM version can be set before file inclusion:
+
+    <script type="text/javascript">
+        var srs = srs || {};
+        srs.adapter = srs.adapter || {};
+        srs.adapter.version = '1.2';
+    </script>
+    <script src="srs-data-adapters/scorm_adapter.js"></script>
 
 #### srs.adapter.properties _(Object)_
 LMS property names specific to protocol type and version.
