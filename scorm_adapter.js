@@ -133,9 +133,10 @@ srs.adapter.connection = function () {
             this._handle = this.getHandle();
             if (this._handle) {
                 this.read(callback);
-                var that = this;
-                window.addEventListener('unload', function (event) {
-                        that.exit();
+                var self = this;
+                srs.adapter.eventHandler.bind(window, 'unload', function (event) {
+                        srs.adapter.eventHandler.unbind(window, 'unload', arguments.callee);
+                        self.exit();
                     });
             } else {
                 callback(new srs.adapter.user());
@@ -307,11 +308,38 @@ srs.adapter.connection = function () {
             return success;
         },
         exit: function () {
-            window.removeEventListener('unload');
             var success = this.terminate();
             return success;
         }
         
     };
 
+};
+
+srs.adapter.eventHandler = {
+    bind: function (el, ev, fn) {
+        if (window.addEventListener) {
+            el.addEventListener(ev, fn, false);
+        } else if (window.attachEvent) {
+            el.attachEvent('on' + ev, fn);
+        } else {
+            el['on' + ev] = fn;
+        }
+    },
+    unbind: function (el, ev, fn) {
+        if (window.removeEventListener) {
+            el.removeEventListener(ev, fn, false);
+        } else if (window.detachEvent) {
+            el.detachEvent('on' + ev, fn);
+        } else {
+            elem['on' + ev] = null; 
+        }
+    },
+    stop: function (ev) {
+        var e = ev || window.event;
+        e.cancelBubble = true;
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+    }
 };
