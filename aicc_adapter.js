@@ -68,7 +68,7 @@ srs.adapter.user = function () {
     this.percent_complete = null;
 };
 
-srs.adapter.connection = function ($) {
+srs.adapter.connection = function () {
 
     return {
         
@@ -100,10 +100,18 @@ srs.adapter.connection = function ($) {
                     }
                 }
 
-                var that = this;
-                window.addEventListener('unload', function (event) {
-                        that.exit();
+                var self = this;
+                if (window.addEventListener) {
+                    window.addEventListener('unload', function (event) {
+                        window.removeEventListener('unload', arguments.callee);
+                        self.exit();
                     });
+                } else {
+                    window.attachEvent('onunload', function (event) {
+                        window.detachEvent('onunload', arguments.callee);
+                        self.exit();
+                    });
+                }
                 this.getAICC(callback);
                 
             } else {
@@ -163,36 +171,44 @@ srs.adapter.connection = function ($) {
                                  '[core_lesson]' + delimiter +
                                  srs.adapter.properties.SUSPEND_DATA + '=' + suspend_data.toString(),
                     encoded_str = encodeURIComponent(string);
-                this.log(encoded_str);
-                $.post(this._aicc_url, { 
-                        command: 'PutParam',
-                        version: srs.adapter.version,
-                        session_id: this._aicc_sid,
-                        AICC_Data: encoded_str
-                    },
-                function (r) {
-                    self.log('PutParam Success');
-                }).error(
-                function (a, b, c) {
-                    self.log(c);
-                });
 
+                if (window.XMLHttpRequest) {
+                    var request = new XMLHttpRequest();
+                    request.open('POST', this._aicc_url, true);
+                    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                    request.onreadystatechange = function (event) {
+                            if (request.readyState === 4 && request.status === 200) {
+                                self.log('PutParam Success');
+                            }
+                        }
+                    request.onerror = function (event) {
+                            self.log(request.responseText);
+                        }
+                    request.send("command=PutParam&version="+srs.adapter.version+"&session_id="+this._aicc_sid+"&AICC_Data="+encoded_str);
+                } else {
+                    this.log('XMLHttpRequest not supported.');
+                }
             }
                 
         },
         getAICC : function (callback) {
             var self = this;
-            $.get(this._aicc_url, { 
-                        command: 'GetParam',
-                        version: srs.adapter.version,
-                        session_id: this._aicc_sid 
-                    },
-                function (r) {
-                    self.read(r, callback);
-                }).error(
-                function (a, b, c) {
-                    self.log(c);
-                });
+            if (window.XMLHttpRequest) {
+                var request = new XMLHttpRequest();
+                request.open('POST', this._aicc_url, true);
+                request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                request.onreadystatechange = function (event) {
+                        if (request.readyState === 4 && request.status === 200) {
+                            self.read(request.responseText, callback);
+                        }
+                    }
+                request.onerror = function (event) {
+                        self.log(request.responseText);
+                    }
+                request.send("command=GetParam&version="+srs.adapter.version+"&session_id="+this._aicc_sid);
+            } else {
+                this.log('XMLHttpRequest not supported.');
+            }
         },
         aiccToObject : function (str) {
             var obj = {},
@@ -229,20 +245,24 @@ srs.adapter.connection = function ($) {
 		},
         terminate : function () {
             var self = this;
-            $.get(this._aicc_url, { 
-                        command: 'ExitAU',
-                        version: srs.adapter.version,
-                        session_id: this._aicc_sid 
-                    },
-                function (r) {
-                    return true;
-                }).error(
-                function (a, b, c){
-                    self.log(c);
-                });
+            if (window.XMLHttpRequest) {
+                var request = new XMLHttpRequest();
+                request.open('POST', this._aicc_url, true);
+                request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                request.onreadystatechange = function (event) {
+                        if (request.readyState === 4 && request.status === 200) {
+                            return true;
+                        }
+                    }
+                request.onerror = function (event) {
+                        self.log(request.responseText);
+                    }
+                request.send("command=ExitAU&version="+srs.adapter.version+"&session_id="+this._aicc_sid);
+            } else {
+                this.log('XMLHttpRequest not supported.');
+            }
         },
         exit : function () {
-            window.removeEventListener('unload');
             var success = this.terminate();
             return success;
         }
