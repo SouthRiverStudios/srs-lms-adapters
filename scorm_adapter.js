@@ -134,10 +134,17 @@ srs.adapter.connection = function () {
             if (this._handle) {
                 this.read(callback);
                 var self = this;
-                srs.adapter.eventHandler.bind(window, 'unload', function (event) {
-                        srs.adapter.eventHandler.unbind(window, 'unload', arguments.callee);
+                if (window.addEventListener) {
+                    window.addEventListener('unload', function (event) {
+                        window.removeEventListener('unload', arguments.callee);
                         self.exit();
                     });
+                } else {
+                    window.attachEvent('onunload', function (event) {
+                        window.detachEvent('onunload', arguments.callee);
+                        self.exit();
+                    });
+                }
             } else {
                 callback(new srs.adapter.user());
             }
@@ -314,32 +321,4 @@ srs.adapter.connection = function () {
         
     };
 
-};
-
-srs.adapter.eventHandler = {
-    bind: function (el, ev, fn) {
-        if (window.addEventListener) {
-            el.addEventListener(ev, fn, false);
-        } else if (window.attachEvent) {
-            el.attachEvent('on' + ev, fn);
-        } else {
-            el['on' + ev] = fn;
-        }
-    },
-    unbind: function (el, ev, fn) {
-        if (window.removeEventListener) {
-            el.removeEventListener(ev, fn, false);
-        } else if (window.detachEvent) {
-            el.detachEvent('on' + ev, fn);
-        } else {
-            elem['on' + ev] = null; 
-        }
-    },
-    stop: function (ev) {
-        var e = ev || window.event;
-        e.cancelBubble = true;
-        if (e.stopPropagation) {
-            e.stopPropagation();
-        }
-    }
 };
