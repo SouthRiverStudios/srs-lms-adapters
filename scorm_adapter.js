@@ -1,20 +1,20 @@
 
 // The MIT License (MIT)
-// 
+//
 // SCORM Data Adapter used to transfer data from application to SCORM-based system
 // Copyright (C) 2013-2015 South River Studios
 // Version 0.0.2
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -34,7 +34,7 @@ srs.adapter.type = 'SCORM';
 switch (srs.adapter.version) {
 
     case '1.2' :
-    
+
         srs.adapter.properties = {
             STUDENT_NAME : 'cmi.core.student_name',
             STUDENT_ID : 'cmi.core.student_id',
@@ -60,7 +60,7 @@ switch (srs.adapter.version) {
             EXIT_SUSPEND : 'suspend',
             EXIT_LOGOUT : 'logout'
         };
-        
+
         srs.adapter.methods = {
             INITIALIZE : 'LMSInitialize',
             SET : 'LMSSetValue',
@@ -69,11 +69,11 @@ switch (srs.adapter.version) {
             TERMINATE : 'LMSFinish',
              GET_LAST_ERROR : 'LMSGetLastError'
         };
-        
+
         break;
 
     case '2004' :
-    
+
         srs.adapter.properties = {
             STUDENT_NAME : 'cmi.learner_name',
             STUDENT_ID : 'cmi.learner_id',
@@ -99,7 +99,7 @@ switch (srs.adapter.version) {
             EXIT_SUSPEND : 'suspend',
             EXIT_LOGOUT : 'normal'
         };
-        
+
         srs.adapter.methods = {
             INITIALIZE : 'Initialize',
             SET : 'SetValue',
@@ -126,7 +126,7 @@ srs.adapter.user = function () {
 srs.adapter.connection = function () {
 
     return {
-        
+
         _handle: null,
         _found: false,
         initialize: function (callback) {
@@ -150,11 +150,11 @@ srs.adapter.connection = function () {
             }
         },
         read: function (callback) {
-            
+
             if (this._handle) {
 
-                var success = (this._handle[srs.adapter.methods.INITIALIZE]('') === 'true'); 
-            
+                var success = (this._handle[srs.adapter.methods.INITIALIZE]('') === 'true');
+
                 if (success) {
 
                     var user_status = new srs.adapter.user();
@@ -165,26 +165,32 @@ srs.adapter.connection = function () {
                     user_status.score_raw = this.getProperty(srs.adapter.properties.SCORE_RAW);
                     user_status.credit = this.getProperty(srs.adapter.properties.CREDIT);
                     user_status.total_time = this.getProperty(srs.adapter.properties.TOTAL_TIME);
-                
+
                      if (this.getProperty(srs.adapter.properties.STATUS) === srs.adapter.strings.NOT_ATTEMPTED || this.getProperty(srs.adapter.properties.STATUS) === srs.adapter.strings.UNKNOWN) {
                         user_status.status = srs.adapter.strings.INCOMPLETE;
                     }
 
                     callback(user_status);
-            
+
                 }
             }
         },
         write: function (user) {
-        
+
             if (this._handle && user) {
-                
+
                 var passing_score = user.passing_score,
-                    score = user.score_raw || this.getProperty(srs.adapter.properties.SCORE_RAW),
+                    score,
                     percent_complete = user.percent_complete,
                     suspend_data = user.suspend_data,
                     location = user.location,
                     status = null;
+
+                if (user.score_raw || user.score_raw === 0) {
+                    score = user.score_raw;
+                } else {
+                    score = this.getProperty(srs.adapter.properties.SCORE_RAW);
+                }
 
                 if (passing_score && score && score >= passing_score && percent_complete === 1) {
                     status = srs.adapter.strings.COMPLETED;
@@ -193,11 +199,8 @@ srs.adapter.connection = function () {
                 } else {
                     status = srs.adapter.strings.INCOMPLETE;
                 }
-                
-                if (score >= passing_score && !this.getProperty(srs.adapter.properties.SCORE_RAW)) {
-                    this.setProperty(srs.adapter.properties.SCORE_RAW, score);
-                }
-                
+
+                this.setProperty(srs.adapter.properties.SCORE_RAW, score);
                 this.setProperty(srs.adapter.properties.STATUS, status);
                 this.setProperty(srs.adapter.properties.LOCATION, location);
                 if (suspend_data && suspend_data.length) {
@@ -211,7 +214,7 @@ srs.adapter.connection = function () {
                     this.setProperty(srs.adapter.properties.SCORE_SCALED, score/100);
                 }
             }
-            
+
         },
         getHandle: function () {
             if(!this._handle && !this._found) {
@@ -223,7 +226,7 @@ srs.adapter.connection = function () {
             var scorm = null,
                 findAttempts = 0,
                 findAttemptLimit = 500;
-            
+
             while ((!win.API && !win.API_1484_11) &&
                (win.parent) &&
                (win.parent !== win) &&
@@ -231,7 +234,7 @@ srs.adapter.connection = function () {
                     findAttempts++;
                     win = win.parent;
             }
-            
+
             switch (srs.adapter.version) {
                 case '2004':
                     if (win.API_1484_11) {
@@ -248,13 +251,13 @@ srs.adapter.connection = function () {
                     }
                     break;
             }
-            
+
             if (scorm) {
                 this.log("API: " + scorm);
             } else {
                 this.log("Error finding API. \nFind attempts: " +findAttempts +". \nFind attempt limit: " +findAttemptLimit);
             }
-            
+
             return scorm;
         },
         getAPI: function () {
@@ -279,14 +282,14 @@ srs.adapter.connection = function () {
             if (this._handle) {
                 this._handle[srs.adapter.methods.SET](prop, val);
             }
-        },		
+        },
         getProperty: function ( prop ) {
             var value = null;
             if (this._handle) {
-                value = this._handle[srs.adapter.methods.GET](prop); 
+                value = this._handle[srs.adapter.methods.GET](prop);
             }
             return value;
-        }, 
+        },
         getLastError: function () {
             var code = 0;
             if (this._handle) {
@@ -318,7 +321,7 @@ srs.adapter.connection = function () {
             var success = this.terminate();
             return success;
         }
-        
+
     };
 
 };
