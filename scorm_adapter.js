@@ -271,7 +271,7 @@ srs.adapter.connection = function () {
             if (!scorm && window.opener) {
                 scorm = this.findAPI(window.opener);
             }
-            if (!scorm && window.opener.opener) {
+            if (!scorm && window.opener && window.opener.opener) {
                 scorm = this.findAPI(window.opener.opener);
             }
             if (!scorm && window.top.opener && window.top.opener.document) {
