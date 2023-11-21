@@ -1,5 +1,15 @@
-import ScormAdapter from "./scorm_adapter"
+import { 
+  Adapter as SCORMAdapter,
+} from "./scorm_adapter"
+import { 
+  Adapter as AICCAdapter,
+} from "./aicc_adapter"
+
+
+import { LMSUser } from "./shared"
 
 export {
-  ScormAdapter
+  AICCAdapter,
+  SCORMAdapter,
+  LMSUser
 }

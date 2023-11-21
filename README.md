@@ -4,68 +4,33 @@ SCORM and AICC data adapters for transferring data between an application and an
 
 ## Instructions
 
-Include either the scorm\_adapter.js or aicc\_adapter.js script in the root of your application. 
+```bash
+npm i https://github.com/SouthRiverStudios/srs-data-adapters.git
+```
 
-Manifest, metadata, descriptor files, etc. specific to each protocol should be included in the root of each application.
+### Usage
 
-#### srs.adapter.type _(String)_
-LMS protocol type, 'SCORM' or 'AICC'. 
+```bash
 
-#### srs.adapter.version _(String)_
-LMS protocol version.
+import ScormAdapter from 'srs-data-adapters'
 
-##### AICC: 
-Specify AICC version.
+let scorm = new ScormAdapter('2004')
 
-##### SCORM: 
+// initialize object to start communication
+scorm.initialize()
+     .then(user => {
+        console.info(user.student_name)
+    })
 
-Specify support for SCORM 1.2 or SCORM 2004.
+score.read(user => {
+    console.info(user.student_name)
+}
 
-SCORM 1.2:
+scorm.write(lms_user)
 
-    srs.adapter.version = '1.2';
-    
-SCORM 2004:
+```
 
-    srs.adapter.version = '2004';
-    
-SCORM version can be set before file inclusion:
 
-    <script type="text/javascript">
-        var srs = srs || {};
-        srs.adapter = srs.adapter || {};
-        srs.adapter.version = '1.2';
-    </script>
-    <script src="srs-data-adapters/scorm_adapter.js"></script>
+### Legacy Version
 
-#### srs.adapter.properties _(Object)_
-LMS property names specific to protocol type and version.
-
-#### srs.adapter.strings _(Object)_
-LMS string names specific to protocol type and version.
-
-#### srs.adapter.methods _(Object)_
-LMS method names specific to protocol type and version.
-
-#### srs.adapter.user _(Object)_
-User object to store and pass data between application and system.
-
-#### srs.adapter.connection.initialize
-Initializes the connection with the system.
-
-    srs.adapter.connection.initialize(callback);
-    
- - __callback__ : Callback function within the application to consume captured user data from system.
-
-#### srs.adapter.connection.write
-Write data to the system.
-
-    srs.adapter.connection.write(user);
-    
-- __user__ : Object of user properties to write to the system in form of srs.adapter.user object.
-
-#### srs.adapter.connection.exit
-Exit the connection, and terminate the session with the system.
-
-    srs.adapter.connection.exit();
-
+See `legacy/README.md`

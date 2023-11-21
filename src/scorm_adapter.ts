@@ -1,47 +1,11 @@
 import { log } from './utils/logger'
+import { 
+  LMSUser,
+  API_MAP,
+  createUser
+} from './shared'
 
 type ScormVersion = '1.2' | '2004'
-
-interface API_PROPERTIES {
-  STUDENT_NAME:string
-  STUDENT_ID:string
-  LOCATION:string
-  STATUS:string
-  SUCCESS:string
-  SUSPEND_DATA:string
-  SCORE_RAW:string
-  SCORE_MIN:string
-  SCORE_MAX:string
-  SCORE_SCALED:string
-  CREDIT:string
-  TOTAL_TIME:string
-  EXIT:string
-}
-
-interface API_STRINGS {
-  COMPLETED:string
-  INCOMPLETE:string
-  PASSED:string
-  NOT_ATTEMPTED:string
-  UNKNOWN:string
-  EXIT_SUSPEND:string
-  EXIT_LOGOUT:string
-}
-
-interface API_METHODS {
-  INITIALIZE:string
-  SET:string
-  GET:string
-  COMMIT:string
-  TERMINATE:string
-  GET_LAST_ERROR:string
-}
-
-interface API_MAP {
-  properties: API_PROPERTIES
-  strings: API_STRINGS
-  methods: API_METHODS
-}
 
 const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
   '1.2': {
@@ -183,35 +147,11 @@ function getAPI(version:ScormVersion):any {
   return api
 }
 
-interface ScormUser {
-  student_name:string
-  student_id:string|number
-  location:string
-  suspend_data:string[]
-  score_raw:number
-  credit:string|number
-  total_time:string|number
-  passing_score:number
-  percent_complete:string|number
-  status:string|number
+function throwNoApi(prefix:string) {
+  throw new Error(`${prefix} > #api does not exist`)
 }
 
-function createUser():ScormUser {
-  return {
-    student_name: '',
-    student_id: '',
-    location: '',
-    suspend_data: [],
-    score_raw: 0,
-    credit: '',
-    total_time: '',
-    passing_score: 0,
-    percent_complete: '',
-    status:''
-  }
-}
-
-export default class ScormAdapter {
+export class Adapter {
 
   #version:ScormVersion
   #api_map:API_MAP
@@ -226,7 +166,7 @@ export default class ScormAdapter {
     return this.#version
   }
   
-  initialize() {
+  initialize():Promise<LMSUser> {
     this.#api = getAPI(this.#version)
     if (this.#api) {
       if (window && window.addEventListener) {
@@ -235,11 +175,11 @@ export default class ScormAdapter {
       return this.read()
     }
     else {
-      Promise.reject(new Error('#initialize > Adapter could not be initialized'))
+      return Promise.reject(new Error('#initialize > Adapter could not be initialized'))
     }
   }
 
-  read():Promise<ScormUser> {
+  read():Promise<LMSUser> {
 
     return new Promise((resolve, reject) => {
 
@@ -269,16 +209,16 @@ export default class ScormAdapter {
           resolve(user_status)
         }
         else {
-          reject('#read > failed to read api')
+          throwNoApi('#read')
         }
       }
       else {
-        reject('#read > #api does not exist')
+        throwNoApi('#read')
       }
     })
   }
 
-  write(user:ScormUser):Promise<ScormUser> {
+  write(user:LMSUser):Promise<LMSUser> {
 
     if (this.#api) {
 
@@ -331,13 +271,8 @@ export default class ScormAdapter {
       return this.read()
     }
     else {
-      this.#throwNoApi('#write')
-      return Promise.reject()
+      return new Promise(()=> throwNoApi('#write'))
     }
-  }
-
-  #throwNoApi(prefix:string) {
-    throw new Error(`${prefix} > #api does not exist`)
   }
 
   getAPIMethod(name:string):Function|undefined {
@@ -346,7 +281,7 @@ export default class ScormAdapter {
       result = this.#api[name] as Function
     }
     else {
-      this.#throwNoApi('#getAPIMethod')
+      throwNoApi('#getAPIMethod')
     }
     return result
   }
@@ -358,12 +293,12 @@ export default class ScormAdapter {
       result = typeof get_method === 'function' && get_method(prop)
     }
     else {
-      this.#throwNoApi('#getProperty')
+      throwNoApi('#getProperty')
     }
     return result
   }
 
-  setProperty(prop:string, val:any):void {
+  setProperty(prop:string, val:any) {
     if (this.#api) {
       const set_method = this.getAPIMethod(this.#api_map.methods.SET)
       if (set_method) {
@@ -371,11 +306,11 @@ export default class ScormAdapter {
       }
     }
     else {
-      this.#throwNoApi('#setProperty')
+      throwNoApi('#setProperty')
     }
   }
 
-  getLastError() {
+  getLastError():string|number {
     let code = 0
     if (this.#api) {
       const error_method = this.getAPIMethod(this.#api_map.methods.GET_LAST_ERROR)
@@ -384,13 +319,13 @@ export default class ScormAdapter {
       }
     }
     else {
-      this.#throwNoApi('#getLastError')
+      throwNoApi('#getLastError')
     }
     return code
   }
 
   terminate():boolean {
-    let success = false
+    let result = false
     if (this.#api) {
       const properties = this.#api_map.properties
       const strings = this.#api_map.strings
@@ -402,14 +337,12 @@ export default class ScormAdapter {
         this.setProperty(properties.EXIT, strings.EXIT_LOGOUT)
       }
       const term_method = this.getAPIMethod(this.#api_map.methods.TERMINATE)
-      if (term_method) {
-        success = (term_method('') === 'true')
-      }
+      result = !!term_method && term_method('') === 'true'
     }
     else {
-      this.#throwNoApi('#terminate')
+      throwNoApi('#terminate')
     }
-    return success
+    return result
   }
 
 }
