@@ -1,0 +1,28 @@
+{
+  "name": "srs-data-adapters",
+  "version": "1.0.0",
+  "description": "SCORM and AICC data adapters for transferring data between an application and an LMS system.",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SouthRiverStudios/srs-data-adapters.git"
+  },
+  "author": "South River Studios, LLC",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SouthRiverStudios/srs-data-adapters/issues"
+  },
+  "homepage": "https://github.com/SouthRiverStudios/srs-data-adapters#readme",
+  "devDependencies": {
+    "ts-node": "^10.9.1",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.2"
+  }
+}
