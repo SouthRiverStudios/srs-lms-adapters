@@ -6,6 +6,12 @@ import {
   createUser 
 } from "./shared"
 
+export const VERSIONS = {
+  V4: '4.0',
+} as const
+
+type VersionAICC = typeof VERSIONS[keyof typeof VERSIONS]
+
 const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
   '4.0': {
     properties: {
@@ -43,7 +49,7 @@ const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
   }
 }
 
-function parseAICC(data:string, version:string):LMSUser {
+function parseAICC(data:string, version:VersionAICC):LMSUser {
 
   let properties = ADAPTER_API_MAP[version].properties
   let strings = ADAPTER_API_MAP[version].strings
@@ -93,7 +99,7 @@ function parseAICC(data:string, version:string):LMSUser {
   return user
 }
 
-function getAICC(url:string, sid:string, version:string):Promise<LMSUser> {
+function getAICC(url:string, sid:string, version:VersionAICC):Promise<LMSUser> {
   return new Promise((resolve, reject) => {
     if (window.XMLHttpRequest) {
       var request = new XMLHttpRequest()
@@ -111,21 +117,26 @@ function getAICC(url:string, sid:string, version:string):Promise<LMSUser> {
       request.send(`command=GetParam&version=${version}&session_id=${sid}`);
     }
     else {
-      throw new Error('XMLHttpRequest not supported.')
+      throw new Error('#getAICC > XMLHttpRequest not supported.')
     }
   })
 }
 
-export class Adapter {
+export default class AdapterAICC {
 
+  static Versions = VERSIONS
   #version
   #api_map:API_MAP
   #aicc_url = ''
   #aicc_sid = ''
 
-  constructor(version:string='4.0') {
+  constructor(version:VersionAICC=VERSIONS.V4) {
     this.#version = version
     this.#api_map = ADAPTER_API_MAP[version]
+  }
+
+  get version():VersionAICC {
+    return this.#version
   }
 
   initialize():Promise<LMSUser> {
@@ -172,63 +183,71 @@ export class Adapter {
     return Promise.reject('noop')
   }
 
-  write(user:LMSUser) {
+  write(user:LMSUser):Promise<boolean> {
 
     if (user && this.#aicc_url && this.#aicc_sid && this.#version) {
-            
-      let passing_score = user.passing_score
-      let score = user.score_raw || 0
-      let percent_complete = user.percent_complete
-      let suspend_data = user.suspend_data
-      let location = user.location
-      let status = null
-
-      const properties = this.#api_map.properties
-      const strings = this.#api_map.strings
-          
-      if (passing_score && score && score >= passing_score && percent_complete === 1) {
-          status = strings.COMPLETED;
-      } else if (!passing_score && percent_complete === 1) {
-          status = strings.COMPLETED;
-      } else {
-          status = strings.INCOMPLETE;
-      }
-      
-      let delimiter = '\r\n'
-      let uri = delimiter+'[core]' + delimiter +
-                properties.LOCATION + '=' + location + delimiter +
-                properties.SCORE_RAW + '=' + score + delimiter +
-                properties.STATUS + '=' + status + delimiter +
-                '[core_lesson]' + delimiter +
-                properties.SUSPEND_DATA + '=' + suspend_data.toString()
-      let encoded_str = encodeURIComponent(uri);
 
       if (window.XMLHttpRequest) {
-          var request = new XMLHttpRequest();
-          request.open('POST', this.#aicc_url, true);
-          request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+
+        return new Promise((resolve) => {
+
+          let passing_score = user.passing_score
+          let score = user.score_raw || 0
+          let percent_complete = user.percent_complete
+          let suspend_data = user.suspend_data
+          let location = user.location
+          let status = null
+
+          const properties = this.#api_map.properties
+          const strings = this.#api_map.strings
+              
+          if(passing_score && score && score >= passing_score && percent_complete === 1) {
+            status = strings.COMPLETED;
+          }
+          else if (!passing_score && percent_complete === 1) {
+            status = strings.COMPLETED;
+          }
+          else {
+            status = strings.INCOMPLETE;
+          }
+          
+          let delimiter = '\r\n'
+          let uri = delimiter+'[core]' + delimiter +
+                    properties.LOCATION + '=' + location + delimiter +
+                    properties.SCORE_RAW + '=' + score + delimiter +
+                    properties.STATUS + '=' + status + delimiter +
+                    '[core_lesson]' + delimiter +
+                    properties.SUSPEND_DATA + '=' + suspend_data.toString()
+          let encoded_str = encodeURIComponent(uri)
+          
+          let request = new XMLHttpRequest()
+          request.open('POST', this.#aicc_url, true)
+          request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8')
           request.onreadystatechange = function (event) {
             if (request.readyState === 4 && request.status === 200) {
               log('#write > PutParam Success')
+              resolve(true)
             }
           }
           request.onerror = function (event) {
             log(request.responseText)
           }
-          request.send(`command=PutParam&version=${this.#version}&session_id=${this.#aicc_sid}&AICC_Data=${encoded_str}`);
-      } else {
-        throw new Error('XMLHttpRequest not supported.')
+          request.send(`command=PutParam&version=${this.#version}&session_id=${this.#aicc_sid}&AICC_Data=${encoded_str}`)
+        })
+      }
+      else {
+        throw new Error('#write > XMLHttpRequest not supported.')
       }
     }
     else {
-      throw new Error('#write > user, aicc_url, aicc_sid, and/or version is undefined.')
+      throw new Error('#write > user, aicc_url, aicc_sid, and/or version is undefined. Did you call #initilize?')
     }
   }
 
   terminate() {
     if (this.#aicc_url && this.#aicc_sid && this.#version) {
       if (window.XMLHttpRequest) {
-        var request = new XMLHttpRequest()
+        let request = new XMLHttpRequest()
         request.open('POST', this.#aicc_url, true)
         request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8')
         request.onreadystatechange = function (event) {
@@ -246,7 +265,7 @@ export class Adapter {
       }
     } 
     else {
-      throw new Error('#terminate > aicc_url, aicc_sid, and/or version is undefined.')
+      throw new Error('#terminate > aicc_url, aicc_sid, and/or version is undefined. Did you call #initilize?')
     }
   }
 

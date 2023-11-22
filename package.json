@@ -1,11 +1,12 @@
 {
   "name": "srs-data-adapters",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "description": "SCORM and AICC data adapters for transferring data between an application and an LMS system.",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "legacy"
   ],
   "scripts": {
     "build": "tsup"

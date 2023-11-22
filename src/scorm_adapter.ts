@@ -5,7 +5,12 @@ import {
   createUser
 } from './shared'
 
-type ScormVersion = '1.2' | '2004'
+const VERSIONS = {
+  V1_2: '1.2',
+  V2004: '2004'
+} as const
+
+type VersionSCORM = typeof VERSIONS[keyof typeof VERSIONS]
 
 const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
   '1.2': {
@@ -78,7 +83,7 @@ const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
   }
 }
 
-function findAPI(version:ScormVersion, target:any):any {
+function findAPI(version:VersionSCORM, target:any):any {
     let api = null
     let findAttempts = 0
     let findAttemptLimit = 500
@@ -92,14 +97,15 @@ function findAPI(version:ScormVersion, target:any):any {
         target = target.parent
     }
 
-    if (version === '2004') {
+    if (version === VERSIONS.V2004) {
       if (target.API_1484_11) {
         api = target.API_1484_11
-      } else {
+      } 
+      else {
         throw new Error('#findApi > SCORM version 2004 was specified by user, but API_1484_11 cannot be found.')
       }
     }
-    else if (version === '1.2') {
+    else if (version === VERSIONS.V1_2) {
       if (target.API) {
         api = target.API
       }
@@ -109,15 +115,17 @@ function findAPI(version:ScormVersion, target:any):any {
     }
 
     if (api) {
-      log("API: " + api)
-    } else {
+      log(`API ${version} Found`)
+      log(api)
+    } 
+    else {
       log(`Error finding API. Find attempts: ${findAttempts}. Find attempt limit: ${findAttemptLimit}`)
     }
 
     return api
 }
 
-function getAPI(version:ScormVersion):any {
+function getAPI(version:VersionSCORM):any {
   let api = null
   
   if (window.parent && window.parent !== window ) {
@@ -151,18 +159,19 @@ function throwNoApi(prefix:string) {
   throw new Error(`${prefix} > #api does not exist`)
 }
 
-export class Adapter {
+export default class AdapterSCORM {
 
-  #version:ScormVersion
+  static Versions = VERSIONS
+  #version:VersionSCORM
   #api_map:API_MAP
   #api = null
 
-  constructor(version:ScormVersion) {
+  constructor(version:VersionSCORM=VERSIONS.V2004) {
     this.#version = version
     this.#api_map = ADAPTER_API_MAP[version]
   }
 
-  get version():ScormVersion {
+  get version():VersionSCORM {
     return this.#version
   }
   
@@ -181,11 +190,11 @@ export class Adapter {
 
   read():Promise<LMSUser> {
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
       if (this.#api) {
         const init_method = this.getAPIMethod(this.#api_map.methods.INITIALIZE)
-        let success = (typeof init_method === 'function' && init_method('') === 'true')
+        let success = !!init_method && init_method('') === 'true'
   
         if (success) {
           let user_status = createUser()
@@ -218,7 +227,7 @@ export class Adapter {
     })
   }
 
-  write(user:LMSUser):Promise<LMSUser> {
+  write(user:LMSUser):Promise<boolean> {
 
     if (this.#api) {
 
@@ -268,7 +277,7 @@ export class Adapter {
           this.setProperty(properties.SCORE_SCALED, score/100);
       }
 
-      return this.read()
+      return Promise.resolve(true)
     }
     else {
       return new Promise(()=> throwNoApi('#write'))
@@ -278,7 +287,13 @@ export class Adapter {
   getAPIMethod(name:string):Function|undefined {
     let result
     if(this.#api) {
-      result = this.#api[name] as Function
+      let method = this.#api[name] as Function
+      if (method) {
+        const api = this.#api
+        result = function() {
+          return method.apply(api, arguments) 
+        }
+      }
     }
     else {
       throwNoApi('#getAPIMethod')
@@ -289,8 +304,8 @@ export class Adapter {
   getProperty(prop:string):string|number {
     let result
     if (this.#api) {
-      const get_method = this.#api[this.#api_map.methods.GET] as Function
-      result = typeof get_method === 'function' && get_method(prop)
+      const get_method = this.getAPIMethod(this.#api_map.methods.GET)
+      result = !!get_method && get_method(prop)
     }
     else {
       throwNoApi('#getProperty')
@@ -301,9 +316,7 @@ export class Adapter {
   setProperty(prop:string, val:any) {
     if (this.#api) {
       const set_method = this.getAPIMethod(this.#api_map.methods.SET)
-      if (set_method) {
-        set_method(prop, val)
-      }
+      !!set_method && set_method(prop, val)
     }
     else {
       throwNoApi('#setProperty')
@@ -314,7 +327,7 @@ export class Adapter {
     let code = 0
     if (this.#api) {
       const error_method = this.getAPIMethod(this.#api_map.methods.GET_LAST_ERROR)
-      if (error_method) {
+      if (!!error_method) {
         code = parseInt(error_method(), 10)
       }
     }

@@ -5,16 +5,17 @@ SCORM and AICC data adapters for transferring data between an application and an
 ## Instructions
 
 ```bash
-npm i https://github.com/SouthRiverStudios/srs-data-adapters.git
+npm i srs-data-adapters
 ```
 
 ### Usage
 
 ```bash
 
-import ScormAdapter from 'srs-data-adapters'
+import AdapterSCORM from 'srs-data-adapters'
 
-let scorm = new ScormAdapter('2004')
+const version = AdapterSCORM.Versions.V1_2
+const scorm = new AdapterSCORM(version)
 
 // initialize object to start communication
 scorm.initialize()
@@ -29,7 +30,6 @@ score.read(user => {
 scorm.write(lms_user)
 
 ```
-
 
 ### Legacy Version
 
