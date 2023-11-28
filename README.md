@@ -1,19 +1,26 @@
 # SRS LMS Adapters
 
+## About
+
 SCORM and AICC compliant communication objects for transferring data between an application and an LMS system.
 
-## Instructions
+## Getting Started
 
-```bash
+### Installation
+
+```sh
 npm i srs-lms-adapters
 ```
 
-### Usage SCORM
+## Usage
 
-```bash
+```javascript
 
+// import either adapter
 import AdapterSCORM from 'srs-lms-adapters'
+import AdapterAICC from 'srs-lms-adapters'
 
+// create a new adapter
 const version = AdapterSCORM.Versions.V1_2
 const scorm = new AdapterSCORM(version)
 let lms_user
@@ -29,7 +36,7 @@ score.read(user => {
     lms_user = user
 }
 
-// write user
+// update and write user
 lms_user.percent_complete = 1
 scorm.write(lms_user)
 
@@ -40,38 +47,33 @@ if (scorm.terminate()) {
 
 ```
 
-### Usage AICC
+## Roadmap
 
-```bash
+- [ ] Improved documentation
+- [ ] Add Changelog
+- [ ] xAPI support
 
-import AdapterAICC from 'srs-lms-adapters'
+## Contributing
 
-const version = AdapterAICC.Versions.V4
-const aicc = new AdapterAICC(version)
-let lms_user
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 
-// initialize object to start communication
-aicc.initialize()
-     .then(user => {
-        lms_user = user
-    })
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-// read user
-aicc.read(user => {
-    lms_user = user
-}
+## License
 
-// write user
-lms_user.percent_complete = 1
-aicc.write(lms_user)
+Distributed under the MIT License. See `LICENSE` for more information.
 
-// end session
-if (aicc.terminate()) {
-    lms_user = null
-}
+## Contact
 
-```
+South River Studios, LLC - [@\_southriver\_](https://twitter.com/_southriver_) - dev@southriverstudios.com
 
-### Legacy Version
+Project Link: [https://github.com/SouthRiverStudios/srs-lms-adapters](https://github.com/SouthRiverStudios/srs-lms-adapters)
+
+
+## Legacy Version
 
 See `legacy/README.md`
