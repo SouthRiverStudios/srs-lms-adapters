@@ -195,7 +195,7 @@ export default class AdapterAICC {
           let passing_score = user.passing_score
           let score = user.score_raw || 0
           let percent_complete = user.percent_complete
-          let suspend_data = user.suspend_data
+          let suspend_data = user.suspend_data || ''
           let location = user.location
           let status = null
 
