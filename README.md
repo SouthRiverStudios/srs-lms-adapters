@@ -1,71 +1,77 @@
-# SRS Data Adapters
+# SRS LMS Adapters
 
-SCORM and AICC data adapters for transferring data between an application and an LMS system.
+SCORM and AICC compliant communication objects for transferring data between an application and an LMS system.
 
 ## Instructions
 
-Include either the scorm\_adapter.js or aicc\_adapter.js script in the root of your application. 
+```bash
+npm i srs-lms-adapters
+```
 
-Manifest, metadata, descriptor files, etc. specific to each protocol should be included in the root of each application.
+### Usage SCORM
 
-#### srs.adapter.type _(String)_
-LMS protocol type, 'SCORM' or 'AICC'. 
+```bash
 
-#### srs.adapter.version _(String)_
-LMS protocol version.
+import AdapterSCORM from 'srs-lms-adapters'
 
-##### AICC: 
-Specify AICC version.
+const version = AdapterSCORM.Versions.V1_2
+const scorm = new AdapterSCORM(version)
+let lms_user
 
-##### SCORM: 
+// initialize object to start communication
+scorm.initialize()
+     .then(user => {
+        lms_user = user
+    })
 
-Specify support for SCORM 1.2 or SCORM 2004.
+// read user
+score.read(user => {
+    lms_user = user
+}
 
-SCORM 1.2:
+// write user
+lms_user.percent_complete = 1
+scorm.write(lms_user)
 
-    srs.adapter.version = '1.2';
-    
-SCORM 2004:
+// end session
+if (scorm.terminate()) {
+    lms_user = null
+}
 
-    srs.adapter.version = '2004';
-    
-SCORM version can be set before file inclusion:
+```
 
-    <script type="text/javascript">
-        var srs = srs || {};
-        srs.adapter = srs.adapter || {};
-        srs.adapter.version = '1.2';
-    </script>
-    <script src="srs-data-adapters/scorm_adapter.js"></script>
+### Usage AICC
 
-#### srs.adapter.properties _(Object)_
-LMS property names specific to protocol type and version.
+```bash
 
-#### srs.adapter.strings _(Object)_
-LMS string names specific to protocol type and version.
+import AdapterAICC from 'srs-lms-adapters'
 
-#### srs.adapter.methods _(Object)_
-LMS method names specific to protocol type and version.
+const version = AdapterAICC.Versions.V4
+const aicc = new AdapterAICC(version)
+let lms_user
 
-#### srs.adapter.user _(Object)_
-User object to store and pass data between application and system.
+// initialize object to start communication
+aicc.initialize()
+     .then(user => {
+        lms_user = user
+    })
 
-#### srs.adapter.connection.initialize
-Initializes the connection with the system.
+// read user
+aicc.read(user => {
+    lms_user = user
+}
 
-    srs.adapter.connection.initialize(callback);
-    
- - __callback__ : Callback function within the application to consume captured user data from system.
+// write user
+lms_user.percent_complete = 1
+aicc.write(lms_user)
 
-#### srs.adapter.connection.write
-Write data to the system.
+// end session
+if (aicc.terminate()) {
+    lms_user = null
+}
 
-    srs.adapter.connection.write(user);
-    
-- __user__ : Object of user properties to write to the system in form of srs.adapter.user object.
+```
 
-#### srs.adapter.connection.exit
-Exit the connection, and terminate the session with the system.
+### Legacy Version
 
-    srs.adapter.connection.exit();
-
+See `legacy/README.md`
