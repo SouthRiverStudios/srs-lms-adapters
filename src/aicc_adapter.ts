@@ -13,7 +13,7 @@ export const VERSIONS = {
 type VersionAICC = typeof VERSIONS[keyof typeof VERSIONS]
 
 const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
-  '4.0': {
+  [VERSIONS.V4]: {
     properties: {
       STUDENT_NAME : 'student_name',
       STUDENT_ID : 'student_id',
