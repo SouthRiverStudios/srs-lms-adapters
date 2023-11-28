@@ -91,9 +91,10 @@ function parseAICC(data:string, version:VersionAICC):LMSUser {
   user.total_time = obj[properties.TOTAL_TIME];
 
   if (properties.STATUS === strings.COMPLETED || properties.STATUS === 'c') {
-    user.status = strings.COMPLETED;
-  } else {
-    user.status = strings.INCOMPLETE;
+    user.status = strings.COMPLETED
+  } 
+  else {
+    user.status = strings.INCOMPLETE
   }
 
   return user
@@ -202,13 +203,13 @@ export default class AdapterAICC {
           const strings = this.#api_map.strings
               
           if(passing_score && score && score >= passing_score && percent_complete === 1) {
-            status = strings.COMPLETED;
+            status = strings.COMPLETED
           }
           else if (!passing_score && percent_complete === 1) {
-            status = strings.COMPLETED;
+            status = strings.COMPLETED
           }
           else {
-            status = strings.INCOMPLETE;
+            status = strings.INCOMPLETE
           }
           
           let delimiter = '\r\n'

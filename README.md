@@ -16,6 +16,7 @@ import AdapterSCORM from 'srs-lms-adapters'
 
 const version = AdapterSCORM.Versions.V1_2
 const scorm = new AdapterSCORM(version)
+let lms_user
 
 // initialize object to start communication
 scorm.initialize()
@@ -33,7 +34,41 @@ lms_user.percent_complete = 1
 scorm.write(lms_user)
 
 // end session
-scorm.terminate()
+if (scorm.terminate()) {
+    lms_user = null
+}
+
+```
+
+### Usage AICC
+
+```bash
+
+import AdapterAICC from 'srs-lms-adapters'
+
+const version = AdapterAICC.Versions.V4
+const aicc = new AdapterAICC(version)
+let lms_user
+
+// initialize object to start communication
+aicc.initialize()
+     .then(user => {
+        lms_user = user
+    })
+
+// read user
+aicc.read(user => {
+    lms_user = user
+}
+
+// write user
+lms_user.percent_complete = 1
+aicc.write(lms_user)
+
+// end session
+if (aicc.terminate()) {
+    lms_user = null
+}
 
 ```
 
