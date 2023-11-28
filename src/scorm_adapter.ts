@@ -13,7 +13,7 @@ const VERSIONS = {
 type VersionSCORM = typeof VERSIONS[keyof typeof VERSIONS]
 
 const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
-  '1.2': {
+  [VERSIONS.V1_2]: {
     properties: {
       STUDENT_NAME: 'cmi.core.student_name',
       STUDENT_ID: 'cmi.core.student_id',
@@ -47,7 +47,7 @@ const ADAPTER_API_MAP:{[key:string]: API_MAP} = {
       GET_LAST_ERROR: 'LMSGetLastError'
     }
   },
-  '2004': {
+  [VERSIONS.V2004]: {
     properties: {
       STUDENT_NAME: 'cmi.learner_name',
       STUDENT_ID: 'cmi.learner_id',
@@ -270,11 +270,11 @@ export default class AdapterSCORM {
         this.setProperty(properties.SUSPEND_DATA, suspend_data.toString())
       }
 
-      if (this.#version === '2004' && this.getProperty(properties.STATUS) === strings.COMPLETED) {
-          this.setProperty(properties.SUCCESS, strings.PASSED);
+      if (this.#version === VERSIONS.V2004 && this.getProperty(properties.STATUS) === strings.COMPLETED) {
+          this.setProperty(properties.SUCCESS, strings.PASSED)
       }
-      if (this.#version === '2004' && this.getProperty(properties.SCORE_RAW)) {
-          this.setProperty(properties.SCORE_SCALED, score/100);
+      if (this.#version === VERSIONS.V2004 && this.getProperty(properties.SCORE_RAW)) {
+          this.setProperty(properties.SCORE_SCALED, score/100)
       }
 
       return Promise.resolve(true)
